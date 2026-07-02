@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "repro-legendlist-initial-scroll",
-    "slug": "repro-legendlist-initial-scroll",
+    "name": "rat-facts",
+    "slug": "rat-facts",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
