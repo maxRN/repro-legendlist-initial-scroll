@@ -1,0 +1,105 @@
+import { SignInWithGoogle, signOut, useAuth, useMutation, useQuery } from "lakebed/client";
+import { cleanFactText, type RatFact } from "../shared/todo";
+
+function AuthAvatar({ label, picture }: { label: string; picture?: string }) {
+  const initial = label.trim().slice(0, 1).toUpperCase() || "?";
+
+  if (picture) {
+    return (
+      <img
+        alt=""
+        className="h-7 w-7 shrink-0 rounded-full border border-neutral-800 bg-neutral-900 object-cover"
+        referrerPolicy="no-referrer"
+        src={picture}
+      />
+    );
+  }
+
+  return (
+    <span
+      aria-hidden="true"
+      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-neutral-800 bg-neutral-900 text-xs font-medium text-neutral-300"
+    >
+      {initial}
+    </span>
+  );
+}
+
+function FactsPage() {
+  const facts = useQuery<RatFact[]>("facts");
+  const addFact = useMutation<[text: string], void>("addFact");
+  const upvoteFact = useMutation<[factId: string], void>("upvoteFact");
+
+  async function onSubmit(event: SubmitEvent) {
+    event.preventDefault();
+    const form = event.currentTarget as HTMLFormElement;
+    const data = new FormData(form);
+    const text = cleanFactText(String(data.get("text") ?? ""));
+    if (!text || text.length < 12) {
+      return;
+    }
+
+    await addFact(text);
+    form.reset();
+  }
+
+  return (
+    <section>
+      <h1 className="mb-3 text-5xl font-bold tracking-tight">Rat Facts</h1>
+      <p className="mb-8 text-neutral-400">Submit fun rat facts and upvote your favorites.</p>
+      <form className="mb-8 flex gap-3" onSubmit={(event) => void onSubmit(event)}>
+        <input
+          className="min-w-0 flex-1 border border-neutral-700 bg-black px-3 py-2 text-white outline-none focus:border-white"
+          name="text"
+          placeholder="Rats can laugh when tickled."
+        />
+        <button className="border border-white px-4 py-2 font-medium" type="submit">Add fact</button>
+      </form>
+      <ul className="space-y-3">
+        {facts.map((fact) => (
+          <li className="border border-neutral-800 p-4" key={fact.id}>
+            <p className="mb-3">{fact.text}</p>
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-sm text-neutral-400">{fact.upvotes} upvotes</span>
+              <button
+                className="border border-white px-3 py-1.5 text-sm font-medium disabled:cursor-not-allowed disabled:border-neutral-700 disabled:text-neutral-600"
+                disabled={fact.hasUpvoted}
+                type="button"
+                onClick={() => void upvoteFact(fact.id)}
+              >
+                {fact.hasUpvoted ? "Upvoted" : "+1 Upvote"}
+              </button>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+export function App() {
+  const auth = useAuth();
+  const authLabel = auth.displayName;
+  const authStatus = auth.isLoading && auth.isGuest ? "checking session" : "signed in as " + authLabel;
+
+  return (
+    <main className="min-h-screen bg-black px-6 py-10 text-white">
+      <section className="mx-auto max-w-2xl">
+        <div className="mb-8 flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-2">
+            {!auth.isLoading ? <AuthAvatar label={authLabel} picture={auth.picture} /> : null}
+            <p className="min-w-0 truncate font-mono text-sm text-neutral-500">{authStatus}</p>
+          </div>
+          {!auth.isLoading && auth.isGuest ? (
+            <SignInWithGoogle className="shrink-0 border border-neutral-700 px-3 py-1.5 text-sm font-medium text-neutral-200 hover:border-white hover:text-white" />
+          ) : !auth.isLoading ? (
+            <button className="shrink-0 text-sm text-neutral-400 hover:text-white" type="button" onClick={() => signOut()}>
+              Sign out
+            </button>
+          ) : null}
+        </div>
+        <FactsPage />
+      </section>
+    </main>
+  );
+}
