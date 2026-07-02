@@ -1,6 +1,17 @@
 import { SignInWithGoogle, signOut, useAuth, useMutation, useQuery } from "lakebed/client";
 import { cleanFactText, type RatFact } from "../shared/todo";
 
+const STARTER_FACTS = [
+  "Rats can learn their own names and come when called.",
+  "Rats use their whiskers to help map spaces in the dark.",
+  "Rats are social animals and often sleep in groups.",
+  "A rat can squeeze through a gap about the size of a coin.",
+  "Rats can laugh in ultrasonic chirps when tickled.",
+  "Rats are capable of empathy and may help trapped cage-mates.",
+  "Rats can tread water for long periods and are strong swimmers.",
+  "Rats memorize routes and can navigate complex mazes quickly."
+];
+
 function AuthAvatar({ label, picture }: { label: string; picture?: string }) {
   const initial = label.trim().slice(0, 1).toUpperCase() || "?";
 
@@ -56,6 +67,14 @@ function FactsPage() {
         <button className="border border-white px-4 py-2 font-medium" type="submit">Add fact</button>
       </form>
       <ul className="space-y-3">
+        {STARTER_FACTS.map((fact) => (
+          <li className="border border-neutral-800 p-4" key={fact}>
+            <p className="mb-3">{fact}</p>
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-sm text-neutral-400">starter fact</span>
+            </div>
+          </li>
+        ))}
         {facts.map((fact) => (
           <li className="border border-neutral-800 p-4" key={fact.id}>
             <p className="mb-3">{fact.text}</p>
