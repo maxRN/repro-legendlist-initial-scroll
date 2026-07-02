@@ -1,4 +1,5 @@
 import { SignInWithGoogle, signOut, useAuth, useMutation, useQuery } from "lakebed/client";
+import { useState } from "preact/hooks";
 import { cleanFactText, type RatFact } from "../shared/todo";
 
 const STARTER_FACTS = [
@@ -40,18 +41,30 @@ function FactsPage() {
   const facts = useQuery<RatFact[]>("facts");
   const addFact = useMutation<[text: string], void>("addFact");
   const upvoteFact = useMutation<[factId: string], void>("upvoteFact");
+  const [formError, setFormError] = useState("");
+  const [submitLabel, setSubmitLabel] = useState("Add fact");
 
   async function onSubmit(event: SubmitEvent) {
     event.preventDefault();
     const form = event.currentTarget as HTMLFormElement;
     const data = new FormData(form);
     const text = cleanFactText(String(data.get("text") ?? ""));
-    if (!text || text.length < 12) {
+    if (!text || text.length < 3) {
+      setFormError("Please enter at least 3 characters.");
       return;
     }
 
-    await addFact(text);
-    form.reset();
+    setSubmitLabel("Adding...");
+    try {
+      await addFact(text);
+      form.reset();
+      setFormError("");
+      setSubmitLabel("Added!");
+      setTimeout(() => setSubmitLabel("Add fact"), 900);
+    } catch {
+      setFormError("Could not add the fact. Please try again.");
+      setSubmitLabel("Add fact");
+    }
   }
 
   return (
@@ -63,9 +76,15 @@ function FactsPage() {
           className="min-w-0 flex-1 border border-neutral-700 bg-black px-3 py-2 text-white outline-none focus:border-white"
           name="text"
           placeholder="Rats can laugh when tickled."
+          onInput={() => {
+            if (formError) {
+              setFormError("");
+            }
+          }}
         />
-        <button className="border border-white px-4 py-2 font-medium" type="submit">Add fact</button>
+        <button className="border border-white px-4 py-2 font-medium" type="submit">{submitLabel}</button>
       </form>
+      {formError ? <p className="mb-6 text-sm text-red-300">{formError}</p> : null}
       <ul className="space-y-3">
         {STARTER_FACTS.map((fact) => (
           <li className="border border-neutral-800 p-4" key={fact}>
